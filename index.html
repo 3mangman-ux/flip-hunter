@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flip Hunter – Detroit finds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a pocket scouting tool. Hunt bar on top, a strip of "what's worth a drive" numbers, then photo cards sorted by profit. Price-tag orange is the only accent; call colors are semantic. */
+:root{
+  --bg:#eef0f3; --surface:#ffffff; --surface-2:#f6f7f9; --ink:#141821; --muted:#5f6675; --line:#dde1e8;
+  --accent:#f2600c; --accent-ink:#ffffff; --accent-soft:#fde7d9;
+  --buy:#13804b; --buy-soft:#dcf3e6; --neg:#a86a00; --neg-soft:#fdf0d2; --info:#2459d6; --info-soft:#e1e9fd; --skip:#6b7280; --skip-soft:#eceef1;
+  --loss:#c0362c;
+  --shadow:0 1px 2px rgba(20,24,33,.06),0 6px 20px rgba(20,24,33,.06);
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1116; --surface:#171b22; --surface-2:#1e232c; --ink:#edf0f5; --muted:#99a1b0; --line:#2a303b;
+  --accent:#ff7a2f; --accent-ink:#1a0d04; --accent-soft:#3a2214;
+  --buy:#4bd28c; --buy-soft:#15301f; --neg:#f2b84b; --neg-soft:#33280f; --info:#7aa2ff; --info-soft:#18233d; --skip:#9aa1ad; --skip-soft:#232831;
+  --loss:#ff7b70; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.25); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --surface:#171b22; --surface-2:#1e232c; --ink:#edf0f5; --muted:#99a1b0; --line:#2a303b;
+  --accent:#ff7a2f; --accent-ink:#1a0d04; --accent-soft:#3a2214;
+  --buy:#4bd28c; --buy-soft:#15301f; --neg:#f2b84b; --neg-soft:#33280f; --info:#7aa2ff; --info-soft:#18233d; --skip:#9aa1ad; --skip-soft:#232831;
+  --loss:#ff7b70; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.25); color-scheme:dark;}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 48px}
+.num{font-variant-numeric:tabular-nums}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:12px;padding:18px 0 14px}
+.logo{display:flex;align-items:center;gap:10px;font:800 22px/1 var(--display);letter-spacing:-.02em}
+.logo .tag{width:30px;height:30px;border-radius:8px 8px 8px 2px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);font-size:15px;transform:rotate(-8deg)}
+.spacer{flex:1}
+.chip-loc{font-size:13px;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:6px 10px;border-radius:999px;white-space:nowrap}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:36px;height:36px;display:grid;place-items:center;cursor:pointer}
+.iconbtn svg{width:18px;height:18px}
+
+/* hunt bar */
+.hunt{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+.hunt h1{font:800 clamp(22px,4.6vw,30px)/1.1 var(--display);letter-spacing:-.02em;margin:0 0 12px;text-wrap:balance}
+.hunt form{display:flex;gap:8px}
+.hunt input[type=search]{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--surface-2);border-radius:12px;padding:12px 14px;font-size:16px}
+.hunt input[type=search]:focus{border-color:var(--accent);outline:none}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer;background:var(--accent);color:var(--accent-ink);white-space:nowrap}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);font-weight:600}
+.sites{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.site{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;user-select:none}
+.site input{accent-color:var(--accent);margin:0}
+.queue{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.q{font-size:13px;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);cursor:pointer}
+.q b{font-weight:600}
+.q .dot{width:7px;height:7px;border-radius:50%;background:var(--skip)}
+.q.queued .dot{background:var(--neg)} .q.running .dot{background:var(--info);animation:pulse 1.2s infinite} .q.done .dot{background:var(--buy)}
+.q.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.q.running .dot{animation:none}}
+.how{font-size:13px;color:var(--muted);margin:10px 0 0}
+
+/* tabs + stats */
+.tabs{display:flex;gap:4px;margin:20px 0 12px;background:var(--surface);border:1px solid var(--line);padding:4px;border-radius:12px;width:max-content}
+.tab{border:0;background:none;padding:8px 14px;border-radius:9px;font-weight:600;cursor:pointer;color:var(--muted)}
+.tab[aria-selected=true]{background:var(--ink);color:var(--surface)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.stat .k{font-size:12px;color:var(--muted);font-weight:600}
+.stat .v{font:800 22px/1.15 var(--display);letter-spacing:-.01em}
+.stat.buy .v{color:var(--buy)} .stat.neg .v{color:var(--neg)} .stat.info .v{color:var(--info)}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.seg{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.pill{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.pill[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.sel{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 10px;font-size:13px}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);cursor:pointer;transition:transform .12s}
+.card:hover{transform:translateY(-2px)}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+.ph{position:relative;aspect-ratio:4/3;background:var(--surface-2);overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .noimg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px}
+.ph .noimg svg{width:42px;height:42px;opacity:.5}
+.price{position:absolute;left:10px;bottom:10px;background:var(--accent);color:var(--accent-ink);font:800 18px/1 var(--display);padding:7px 10px 7px 12px;border-radius:4px 10px 10px 4px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.src{position:absolute;right:10px;top:10px;font-size:11px;font-weight:700;letter-spacing:.02em;padding:4px 8px;border-radius:6px;background:rgba(10,12,16,.72);color:#fff}
+.call{position:absolute;left:10px;top:10px;font-size:11px;font-weight:800;letter-spacing:.04em;padding:4px 8px;border-radius:6px;text-transform:uppercase}
+.c-buy{background:var(--buy-soft);color:var(--buy)} .c-negotiate{background:var(--neg-soft);color:var(--neg)} .c-info{background:var(--info-soft);color:var(--info)} .c-skip{background:var(--skip-soft);color:var(--skip)}
+.body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.title{font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{font-size:13px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface-2);border-radius:10px;padding:8px}
+.nums div{display:flex;flex-direction:column}
+.nums span{font-size:11px;color:var(--muted);font-weight:600}
+.nums b{font-size:15px}
+.pos{color:var(--buy)} .negv{color:var(--loss)}
+.note{font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.openl{font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;align-self:flex-start}
+.status{margin-top:auto;font-size:12px;font-weight:700;color:var(--muted)}
+.status.s-messaged{color:var(--info)} .status.s-bought,.status.s-listed{color:var(--neg)} .status.s-sold{color:var(--buy)}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 16px;background:var(--surface);border:1px dashed var(--line);border-radius:16px}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(8,10,14,.5);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.scrim.open{display:flex}
+@media (min-width:760px){.scrim{align-items:center}}
+.sheet{background:var(--surface);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:20px 20px 0 0;padding:0 0 20px}
+@media (min-width:760px){.sheet{border-radius:20px}}
+.sheet .hero{position:relative;aspect-ratio:16/10;background:var(--surface-2)}
+.sheet .hero img{width:100%;height:100%;object-fit:cover}
+.sheet .x{position:absolute;right:12px;top:12px;background:rgba(10,12,16,.7);color:#fff;border:0}
+.sheet .in{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.sheet h2{font:800 22px/1.2 var(--display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.math{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.math div{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line);font-size:14px}
+.math div:last-child{border-bottom:0;font-weight:700;background:var(--surface-2)}
+.math span{color:var(--muted)}
+.box{background:var(--surface-2);border-radius:12px;padding:12px;font-size:14px}
+.box h3{margin:0 0 6px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.contact{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.contact code{font:600 14px var(--body);background:var(--surface);border:1px solid var(--line);padding:6px 10px;border-radius:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row > *{flex:1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+label.f input,label.f select,label.f textarea{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:9px 10px;font-size:15px;color:var(--ink);font-weight:500}
+a.btn{text-decoration:none;text-align:center}
+.upd{font-size:12px;color:var(--muted);white-space:nowrap}
+.iconbtn.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.iconbtn.spin svg{animation:none}}
+.newb{position:absolute;left:10px;top:34px;font-size:10px;font-weight:800;letter-spacing:.05em;padding:3px 7px;border-radius:6px;background:var(--accent);color:var(--accent-ink)}
+.offer{font-size:13px;font-weight:600;color:var(--ink);background:var(--accent-soft);border-radius:8px;padding:6px 8px}
+.qsearch{flex:1;min-width:140px;max-width:260px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 10px;font-size:13px}
+.msg{white-space:pre-wrap;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;margin:6px 0}
+.cta{display:flex;gap:8px;flex-wrap:wrap}
+.cta a,.cta button{flex:1;min-width:120px}
+.logo{white-space:nowrap}
+@media (max-width:600px){
+  .upd{display:none}
+  .top{gap:8px}
+  .grid{grid-template-columns:1fr;gap:10px}
+  .card{flex-direction:row;border-radius:14px}
+  .card:hover{transform:none}
+  .card .ph{width:124px;flex:none;aspect-ratio:auto;min-height:150px}
+  .card .ph .src,.card .ph .newb{display:none}
+  .card .price{font-size:15px;left:6px;bottom:6px;padding:5px 8px}
+  .card .call{left:6px;top:6px;font-size:10px;padding:3px 6px}
+  .card .body{padding:10px 12px;gap:6px;min-width:0}
+  .card .title{font-size:14px}
+  .card .nums{padding:6px;gap:4px}
+  .card .nums b{font-size:14px}
+  .card .note{-webkit-line-clamp:1}
+  .card .msrc{display:inline}
+}
+.msrc{display:none}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:40;display:none}
+.banner{background:var(--accent-soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:12px;display:none}
+
+/* flips table */
+.flips{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow-x:auto}
+.flips table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.flips th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line)}
+.flips td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.flips tr:last-child td{border-bottom:0}
+.flips .t{display:flex;align-items:center;gap:10px}
+.flips .t img,.flips .t .ni{width:40px;height:40px;border-radius:8px;object-fit:cover;background:var(--surface-2)}
+.flips input{width:80px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:6px 8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo"><span class="tag" aria-hidden="true">$</span>Flip Hunter</div>
+    <div class="spacer"></div>
+    <span class="upd" id="upd"></span>
+    <span class="chip-loc" id="locChip">48224 · 25 mi</span>
+    <button class="iconbtn" id="refBtn" aria-label="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg></button>
+    <button class="iconbtn" id="setBtn" hidden aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </header>
+
+  <section class="hunt">
+    <h1>Local resale finds near Detroit</h1>
+    <p class="how" style="margin-top:0">VCRs and DVD recorders listed on Facebook Marketplace and Craigslist within 25 miles of 48224, each checked against what it actually sells for on eBay (used, sold), after 13.6% fees and $20 shipping. <span id="pubUpd"></span></p>
+    <div class="queue" id="queue" hidden></div><form id="huntForm" hidden></form><div class="banner" id="banner"></div>
+  </section>
+
+  <div class="tabs" role="tablist" hidden>
+    <button class="tab" role="tab" id="tabFinds" aria-selected="true">Finds</button>
+    <button class="tab" role="tab" id="tabFlips" aria-selected="false">My flips</button>
+  </div>
+
+  <section id="findsView">
+    <div class="stats" id="stats"></div>
+    <div class="filters">
+      <div class="seg" id="callSeg"></div>
+      <input class="qsearch" id="txt" type="search" placeholder="Filter finds…" aria-label="Filter finds by text">
+      <select class="sel" id="srcSel" aria-label="Site"><option value="">All sites</option><option>Facebook</option><option>Craigslist</option><option>OfferUp</option></select>
+      <select class="sel" id="sortSel" aria-label="Sort">
+        <option value="profit">Best profit</option>
+        <option value="price">Lowest price</option>
+        <option value="new">Newest</option>
+      </select>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="flipsView" hidden>
+    <div class="stats" id="flipStats"></div>
+    <div class="flips"><table><thead><tr><th>Item</th><th>Stage</th><th>Paid</th><th>Sold for</th><th>Profit</th></tr></thead><tbody id="flipRows"></tbody></table></div>
+    <p class="how">Mark a find as Bought from its card. Enter what you paid and what it sold for, and profit is worked out after eBay fees and shipping.</p>
+  </section>
+</div>
+
+<div class="scrim" id="scrim" role="dialog" aria-modal="true" aria-labelledby="dTitle"><div class="sheet" id="sheet"></div></div>
+<div class="scrim" id="setScrim" role="dialog" aria-modal="true" aria-labelledby="sTitle">
+  <div class="sheet"><div class="in">
+    <h2 id="sTitle">Settings</h2>
+    <div class="row">
+      <label class="f">eBay fee %<input id="setFee" type="number" step="0.1" min="0" max="40"></label>
+      <label class="f">Shipping per sale $<input id="setShip" type="number" step="1" min="0"></label>
+    </div>
+    <div class="row">
+      <label class="f">ZIP<input id="setZip" inputmode="numeric" maxlength="5"></label>
+      <label class="f">Radius (mi)<input id="setRad" type="number" step="5" min="5" max="100"></label>
+    </div>
+    <div class="row">
+      <label class="f">Profit you want per flip $ (sets the max offer)<input id="setTarget" type="number" step="5" min="0"></label>
+    </div>
+    <div class="row"><button class="btn ghost" id="setCancel">Cancel</button><button class="btn" id="setSave">Save</button></div>
+  </div></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const money = n => (n < 0 ? "-$" : "$") + Math.abs(Math.round(n)).toLocaleString();
+  const CALLS = [["all","All"],["buy","Buy"],["negotiate","Negotiate"],["info","Need info"],["skip","Skip"]];
+  const CALL_LABEL = {buy:"Buy",negotiate:"Negotiate",info:"Need info",skip:"Skip"};
+  const STAGES = [["new","Not contacted"],["messaged","Messaged seller"],["bought","Bought"],["listed","Listed on eBay"],["sold","Sold"],["passed","Passed"]];
+  const STAGE_LABEL = Object.fromEntries(STAGES);
+  const NOIMG = '<div class="noimg"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="14" width="40" height="20" rx="3"/><circle cx="16" cy="24" r="4"/><circle cx="32" cy="24" r="4"/><path d="M20 24h8"/></svg></div>';
+
+  let db = null, listings = [], searches = [], settings = {fee:13.6, ship:20, zip:"48224", radius:25, target:35};
+  let fTxt = "", fSrc = "", lastSync = null;
+  let fCall = "buy_neg", fQuery = null, sortBy = "profit", openId = null;
+  try { const s = localStorage.getItem("fh.sort"); if (s) sortBy = s; } catch(e){}
+  $("#sortSel").value = sortBy;
+
+  function calc(l){
+    const fee = (+settings.fee || 0)/100, ship = +settings.ship || 0;
+    if (l.median == null) return {net:null, profit:null, mult:null};
+    const net = l.median*(1-fee) - ship;
+    const maxOffer = Math.floor((net - (+settings.target||0))/5)*5;
+    return {net, profit: net - (+l.price||0), mult: l.price ? l.median/l.price : null, maxOffer};
+  }
+  function toast(t){ const el=$("#toast"); el.textContent=t; el.style.display="block"; clearTimeout(toast._t); toast._t=setTimeout(()=>el.style.display="none",2200); }
+  function banner(t){ const b=$("#banner"); b.textContent=t||""; b.style.display=t?"block":"none"; }
+
+  /* ---------- render: finds ---------- */
+  function renderSeg(){
+    const counts = {all:listings.length};
+    listings.forEach(l => counts[l.call] = (counts[l.call]||0)+1);
+    const opts = [["buy_neg","Worth a look"], ...CALLS];
+    $("#callSeg").innerHTML = opts.map(([k,t]) => {
+      const n = k==="buy_neg" ? (counts.buy||0)+(counts.negotiate||0) : (counts[k]||0);
+      return `<button class="pill" data-k="${k}" aria-pressed="${fCall===k}">${t} <span class="num">${n}</span></button>`;
+    }).join("");
+  }
+  function visible(){
+    const t = fTxt.trim().toLowerCase();
+    let v = listings.filter(l => (!fQuery || l.query === fQuery) && (!fSrc || l.source === fSrc)
+      && (!t || [l.title,l.location,l.note,l.desc].join(" ").toLowerCase().includes(t)));
+    if (fCall !== "all") v = v.filter(l => l.status !== "passed");
+    if (fCall === "buy_neg") v = v.filter(l => l.call==="buy" || l.call==="negotiate");
+    else if (fCall !== "all") v = v.filter(l => l.call === fCall);
+    const pr = l => { const p = calc(l).profit; return p == null ? -1e9 : p; };
+    if (sortBy==="profit") v.sort((a,b) => pr(b)-pr(a));
+    else if (sortBy==="price") v.sort((a,b) => (a.price||0)-(b.price||0));
+    else v.sort((a,b) => (b.foundAt||"").localeCompare(a.foundAt||""));
+    return v;
+  }
+  function renderStats(){
+    const scope = listings.filter(l => !fQuery || l.query === fQuery);
+    const n = c => scope.filter(l => l.call===c).length;
+    const upside = scope.filter(l => l.call==="buy"||l.call==="negotiate").reduce((s,l)=>{const p=calc(l).profit; return s + (p>0?p:0);},0);
+    $("#stats").innerHTML = `
+      <div class="stat buy"><div class="k">Buys</div><div class="v num">${n("buy")}</div></div>
+      <div class="stat neg"><div class="k">Negotiate</div><div class="v num">${n("negotiate")}</div></div>
+      <div class="stat info"><div class="k">Need info</div><div class="v num">${n("info")}</div></div>
+      <div class="stat"><div class="k">Profit on the table</div><div class="v num">${money(upside)}</div></div>`;
+  }
+  const isNew = l => l.foundAt && (Date.now() - Date.parse(l.foundAt)) < 864e5;
+  function card(l){
+    const c = calc(l);
+    const img = l.img ? `<img src="${esc(l.img)}" alt="" onerror="this.style.display='none'">` : NOIMG;
+    const st = l.status && l.status!=="new" ? `<div class="status s-${esc(l.status)}">${esc(STAGE_LABEL[l.status]||l.status)}</div>` : "";
+    return `<article class="card" data-id="${esc(l.id)}" tabindex="0">
+      <div class="ph">${img}
+        <span class="call c-${esc(l.call)}">${esc(CALL_LABEL[l.call]||l.call)}</span>
+        <span class="src">${esc(l.source)}</span>
+        ${isNew(l)?'<span class="newb">NEW</span>':""}
+        <span class="price num">${l.price ? money(l.price) : "Free"}</span>
+      </div>
+      <div class="body">
+        <div class="title">${esc(l.title)}</div>
+        <div class="meta"><span class="msrc">${esc(l.source)} ·</span><span>${esc(l.location||"")}</span>${l.sold30!=null?`<span>· ${l.sold30} sold / 30d</span>`:""}</div>
+        <div class="nums num">
+          <div><span>eBay sells</span><b>${l.median!=null?money(l.median):"—"}</b></div>
+          <div><span>You net</span><b>${c.net!=null?money(c.net):"—"}</b></div>
+          <div><span>Profit</span><b class="${c.profit==null?"":c.profit>=0?"pos":"negv"}">${c.profit!=null?money(c.profit):"—"}</b></div>
+        </div>
+        ${(l.call==="buy"||l.call==="negotiate")&&(l.offer||(c.maxOffer!=null&&c.maxOffer>0))?`<div class="offer num">Offer ${money(l.offer || Math.min(c.maxOffer,l.price||c.maxOffer))}${l.phone?" · text "+esc(l.phone):""}</div>`:""}
+        <div class="note">${esc(l.note||"")}</div>
+        ${st}
+        ${l.url?`<a class="openl" href="${esc(l.url)}" data-stop>Open on ${esc(l.source)} ↗</a>`:""}
+      </div></article>`;
+  }
+  window.__NOIMG = NOIMG;
+  function renderGrid(){
+    const v = visible();
+    $("#grid").innerHTML = v.length ? v.map(card).join("") :
+      `<div class="empty">${listings.length ? "Nothing in this filter. Try All." : "No finds yet. Type what you're hunting above and press Hunt."}</div>`;
+  }
+  function renderQueue(){
+    const s = [...searches].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,12);
+    const label = q => q.status==="done" ? `${q.found||0} found` : q.status==="running" ? "searching…" : "queued";
+    $("#queue").innerHTML = (s.length?`<button class="q ${fQuery===null?"active":""}" data-q=""><b>All hunts</b></button>`:"") + s.map(q =>
+      `<button class="q ${esc(q.status)} ${fQuery===q.q?"active":""}" data-q="${esc(q.q)}" title="${esc(q.note||"")}"><span class="dot"></span><b>${esc(q.q)}</b> <span>${label(q)}</span></button>`).join("");
+  }
+  function renderAll(){ renderQueue(); renderSeg(); renderStats(); renderGrid(); renderFlips(); if (openId) openSheet(openId, true); }
+
+  /* ---------- detail sheet ---------- */
+  function openSheet(id, refresh){
+    const l = listings.find(x => x.id===id); if (!l) return closeSheet();
+    openId = id;
+    const c = calc(l);
+    const contact = [];
+    if (l.contactName || l.contactPref) contact.push(`<div>${l.contactName?`Seller: <b>${esc(l.contactName)}</b>`:""}${l.contactName&&l.contactPref?" · ":""}${esc(l.contactPref||"")}</div>`);
+    if (l.phone) { const d = l.phone.replace(/[^0-9+]/g,""); contact.push(`<div class="contact"><code>${esc(l.phone)}</code></div><div class="cta"><a class="btn" href="sms:${esc(d)}">Text</a><a class="btn ghost" href="tel:${esc(d)}">Call</a><button class="btn ghost" data-copy="${esc(l.phone)}">Copy number</button></div>`); }
+    if (l.email) contact.push(`<div class="contact"><code style="word-break:break-all">${esc(l.email)}</code></div><div class="cta"><a class="btn" href="mailto:${esc(l.email)}?subject=${encodeURIComponent(l.title)}">Email seller</a><button class="btn ghost" data-copy="${esc(l.email)}">Copy email</button></div>`);
+    if (!contact.length) contact.push(`<div>${l.source==="Facebook" ? "Message the seller on Facebook from the listing." : l.source==="Craigslist" ? "Tap Open listing, then Reply: Craigslist shows the seller's email or number there." : "Message the seller in the app from the listing."}</div>`);
+    const math = l.median!=null ? `<div class="math num">
+        <div><span>eBay used median${l.compRange?` (${esc(l.compRange)})`:""}</span><b>${money(l.median)}</b></div>
+        <div><span>− eBay fees ${settings.fee}%</span><b>−${money(l.median*settings.fee/100)}</b></div>
+        <div><span>− Shipping</span><b>−${money(settings.ship)}</b></div>
+        <div><span>− Asking price</span><b>−${money(l.price||0)}</b></div>
+        <div><span>Profit</span><b class="${c.profit>=0?"pos":"negv"}">${money(c.profit)}</b></div></div>`
+      : `<div class="box">No eBay comps yet for this one${l.compRange?` (${esc(l.compRange)})`:""}.</div>`;
+    const speed = (l.sold30!=null||l.sold90!=null) ? `<div class="box"><h3>How fast it sells</h3>${l.sold30!=null?`${l.sold30} sold in the last 30 days`:""}${l.sold30!=null&&l.sold90!=null?" · ":""}${l.sold90!=null?`${l.sold90} in 90 days`:""}</div>` : "";
+    $("#sheet").innerHTML = `
+      <div class="hero">${l.img?`<img src="${esc(l.img)}" alt="">`:NOIMG}
+        <button class="iconbtn x" id="xBtn" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <span class="call c-${esc(l.call)}">${esc(CALL_LABEL[l.call]||l.call)}</span>
+        <span class="price num">${l.price?money(l.price):"Free"}</span></div>
+      <div class="in">
+        <div><h2 id="dTitle">${esc(l.title)}</h2><div class="meta" style="margin-top:4px"><span>${esc(l.source)}</span><span>· ${esc(l.location||"")}</span>${l.query?`<span>· hunt: ${esc(l.query)}</span>`:""}</div></div>
+        ${l.note?`<div class="box"><h3>Claude's take</h3>${esc(l.note)}</div>`:""}
+        ${math}${speed}
+        ${l.desc?`<div class="box"><h3>Seller's description</h3>${esc(l.desc)}</div>`:""}
+        <div class="box"><h3>Contact</h3>${l.source==="Facebook"?"Message the seller from the listing on Facebook.":"Open the listing and use Reply to reach the seller."}</div>
+        ${l.url?`<a class="btn" href="${esc(l.url)}">Open listing on ${esc(l.source)}</a><div class="meta" style="word-break:break-all">${esc(l.url)}</div>`:""}
+      </div>`;
+    if (!refresh){ $("#scrim").classList.add("open"); $("#xBtn").focus(); }
+    $("#xBtn").onclick = closeSheet;
+
+  }
+  function offerBox(l, c){
+    if (l.call === "skip" || c.maxOffer == null) return "";
+    const offer = l.offer || Math.max(5, Math.min(c.maxOffer, l.price||c.maxOffer));
+    const msg = `Hi! Is your ${l.title.replace(/\s+—\s.*$/,"").replace(/\s*\(.*\)\s*$/,"")} still available? Would you take $${offer}? I can pick up ${l.source==="Craigslist"?"today":"today or tomorrow"}.`;
+    return `<div class="box"><h3>Message to send</h3>
+      <div class="meta">Suggested offer: <b class="num">${money(offer)}</b> · max for ${money(settings.target)} profit: <b class="num">${c.maxOffer>0?money(c.maxOffer):"none"}</b></div>
+      <div class="msg">${esc(msg)}</div>
+      <button class="btn ghost" data-copy="${esc(msg)}">Copy message</button></div>`;
+  }
+  function closeSheet(){ openId=null; $("#scrim").classList.remove("open"); }
+  $("#scrim").addEventListener("click", e => { if (e.target.id==="scrim") closeSheet(); });
+  document.addEventListener("keydown", e => { if (e.key==="Escape"){ closeSheet(); $("#setScrim").classList.remove("open"); } });
+  $("#sheet").addEventListener("click", async e => {
+    const b = e.target.closest("[data-copy]"); if (!b) return;
+    const t = b.dataset.copy;
+    try { await navigator.clipboard.writeText(t); return toast("Copied"); } catch(err){}
+    try { const ta=document.createElement("textarea"); ta.value=t; ta.setAttribute("readonly",""); ta.style.cssText="position:fixed;opacity:0;top:0"; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,t.length); const ok=document.execCommand("copy"); ta.remove(); if (ok) return toast("Copied"); } catch(err){}
+    toast("Press and hold the text to copy it");
+  });
+
+  async function save(id, patch, msg){
+    if (!db) return toast("Can't save here. Open this page signed in to Claude.");
+    try { await db.doc("listings/"+id).update(patch); if (msg) toast(msg); }
+    catch(e){ toast(e && e.code==="quota_exceeded" ? "Storage is full." : "Couldn't save. Try again."); }
+  }
+
+  /* ---------- flips ---------- */
+  function renderFlips(){
+    const mine = listings.filter(l => ["bought","listed","sold"].includes(l.status));
+    const fee = settings.fee/100, ship = +settings.ship||0;
+    let spent=0, earned=0, sold=0;
+    $("#flipRows").innerHTML = mine.length ? mine.map(l => {
+      const paid = l.paid ?? l.price ?? 0; spent += +paid||0;
+      let p = "—";
+      if (l.soldFor){ const pr = l.soldFor*(1-fee) - ship - paid; earned += pr; sold++; p = `<b class="${pr>=0?"pos":"negv"}">${money(pr)}</b>`; }
+      return `<tr data-id="${esc(l.id)}"><td><div class="t">${l.img?`<img src="${esc(l.img)}" alt="">`:`<span class="ni"></span>`}<span>${esc(l.title)}</span></div></td>
+        <td>${esc(STAGE_LABEL[l.status])}</td>
+        <td><input class="num" data-f="paid" type="number" value="${esc(paid)}" aria-label="Paid"></td>
+        <td><input class="num" data-f="soldFor" type="number" value="${esc(l.soldFor??"")}" placeholder="—" aria-label="Sold for"></td>
+        <td class="num">${p}</td></tr>`;
+    }).join("") : `<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:28px">Nothing bought yet. Open a find and set its stage to Bought.</td></tr>`;
+    $("#flipStats").innerHTML = `
+      <div class="stat"><div class="k">In progress</div><div class="v num">${mine.length}</div></div>
+      <div class="stat"><div class="k">Spent</div><div class="v num">${money(spent)}</div></div>
+      <div class="stat"><div class="k">Sold</div><div class="v num">${sold}</div></div>
+      <div class="stat buy"><div class="k">Profit so far</div><div class="v num">${money(earned)}</div></div>`;
+  }
+  $("#flipRows").addEventListener("change", e => {
+    const inp = e.target.closest("input[data-f]"); if (!inp) return;
+    const id = inp.closest("tr").dataset.id; const v = inp.value === "" ? null : +inp.value;
+    save(id, {[inp.dataset.f]: v}, "Saved");
+  });
+
+  /* ---------- events ---------- */
+  $("#callSeg").addEventListener("click", e => { const b=e.target.closest(".pill"); if(!b) return; fCall=b.dataset.k; renderSeg(); renderGrid(); });
+  $("#queue").addEventListener("click", e => { const b=e.target.closest(".q"); if(!b) return; fQuery=b.dataset.q||null; renderAll(); });
+  $("#txt").addEventListener("input", e => { fTxt = e.target.value; renderGrid(); });
+  $("#srcSel").onchange = e => { fSrc = e.target.value; renderGrid(); };
+  $("#refBtn").onclick = () => location.reload();
+  async function refresh(){
+    if (!db) return toast("Open this page signed in to Claude to load finds.");
+    const b = $("#refBtn"); b.classList.add("spin");
+    try {
+      const [ls, ss, st] = await Promise.all([db.collection("listings").get(), db.collection("searches").get(), db.doc("settings/main").get()]);
+      listings = ls.docs.map(d => ({id:d.id, ...d.data()})); searches = ss.docs.map(d => ({id:d.id, ...d.data()}));
+      if (st.exists) settings = {...settings, ...st.data()};
+      stamp(); renderLoc(); renderAll(); toast("Up to date");
+    } catch(e){ toast("Couldn't refresh. Check your connection."); }
+    b.classList.remove("spin");
+  }
+  function stamp(){ lastSync = new Date(); $("#upd").textContent = "Updated " + lastSync.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
+  $("#sortSel").onchange = e => { sortBy=e.target.value; try{localStorage.setItem("fh.sort",sortBy)}catch(_){} renderGrid(); };
+  $("#grid").addEventListener("click", e => { if (e.target.closest("[data-stop]")) return; const c=e.target.closest(".card"); if(c) openSheet(c.dataset.id); });
+  $("#grid").addEventListener("keydown", e => { if(e.key==="Enter"){ const c=e.target.closest(".card"); if(c) openSheet(c.dataset.id);} });
+  function setTab(f){ $("#tabFinds").setAttribute("aria-selected", f); $("#tabFlips").setAttribute("aria-selected", !f); $("#findsView").hidden=!f; $("#flipsView").hidden=f; }
+  $("#tabFinds").onclick = () => setTab(true); $("#tabFlips").onclick = () => setTab(false);
+
+  $("#huntForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const q = $("#q").value.trim().toLowerCase(); if (!q) return $("#q").focus();
+    if (!db) return toast("Can't queue here. Open this page signed in to Claude.");
+    const sites = [...document.querySelectorAll("#sites input:checked")].map(i=>i.value);
+    if (!sites.length) return toast("Pick at least one site");
+    const id = q.replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60) || "hunt";
+    $("#huntBtn").disabled = true;
+    try {
+      await db.doc("searches/"+id).set({q, sites, status:"queued", createdAt:Date.now(), zip:settings.zip, radius:settings.radius});
+      $("#q").value = ""; fQuery = q; renderAll();
+      toast(`“${q}” queued`);
+    } catch(err){ toast("Couldn't queue that hunt. Try again."); }
+    $("#huntBtn").disabled = false;
+  });
+
+  $("#setBtn").onclick = () => { $("#setFee").value=settings.fee; $("#setShip").value=settings.ship; $("#setZip").value=settings.zip; $("#setRad").value=settings.radius; $("#setTarget").value=settings.target; $("#setScrim").classList.add("open"); };
+  $("#setCancel").onclick = () => $("#setScrim").classList.remove("open");
+  $("#setScrim").addEventListener("click", e => { if (e.target.id==="setScrim") $("#setScrim").classList.remove("open"); });
+  $("#setSave").onclick = async () => {
+    const next = {fee:+$("#setFee").value||0, ship:+$("#setShip").value||0, zip:($("#setZip").value||"48224").trim(), radius:+$("#setRad").value||25, target:+$("#setTarget").value||0};
+    $("#setScrim").classList.remove("open");
+    settings = {...settings, ...next}; renderLoc(); renderAll();
+    if (db) { try { await db.doc("settings/main").set(settings); toast("Settings saved"); } catch(e){ toast("Couldn't save settings"); } }
+  };
+  function renderLoc(){ $("#locChip").textContent = `${settings.zip} · ${settings.radius} mi`; }
+
+  /* ---------- data ---------- */
+  renderAll();
+  (async () => {
+    try {
+      const d = await (await fetch("data.json", {cache:"no-store"})).json();
+      listings = d.listings || []; settings = {...settings, ...(d.settings||{})};
+      const u = new Date(d.updated); lastSync = u;
+      $("#pubUpd").textContent = "Last updated " + u.toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) + ".";
+      $("#upd").textContent = "Updated " + u.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+      renderLoc(); renderAll();
+    } catch(e){ banner("Couldn't load the finds. Try refreshing the page."); }
+  })();
+})();
+</script>
+</body>
+</html>
