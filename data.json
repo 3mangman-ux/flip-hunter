@@ -1,5 +1,5 @@
 {
-"updated": "2026-11-15T10:10:00Z",
+"updated": "2026-11-15T10:24:00Z",
 "settings": {
 "fee": 13.6,
 "ship": 20,
@@ -484,6 +484,84 @@
 "foundAt": "2026-11-15T09:55:00Z",
 "median": 80,
 "compRange": "$60–100 (est.)"
+},
+{
+"id": "2046203469333677",
+"title": "Sony VRD-MC5 DVDirect DVD recorder — new in box",
+"source": "Facebook",
+"price": 50,
+"location": "Detroit",
+"call": "negotiate",
+"offer": 20,
+"median": 75,
+"compRange": "$67–100 new",
+"sold30": 10,
+"sold90": 21,
+"note": "New-in-box VRD-MC5s sell ~$75 (about 10 a month; used ones only ~$35). About break-even at $50. Offer $20 for ~$25 profit; it's been listed 10 weeks.",
+"desc": "Sony Multi-Function DVD Recorder VRD-MC5 (DVDirect), brand new in the box.",
+"url": "https://www.facebook.com/marketplace/item/2046203469333677/",
+"img": "img/2046203469333677.jpg",
+"foundAt": "2026-11-15T10:20:00Z"
+},
+{
+"id": "2477627636080207",
+"title": "Magnavox ZV427MG9 DVD recorder/VCR — new, sealed",
+"source": "Facebook",
+"price": 450,
+"location": "St Clair Shores",
+"call": "skip",
+"median": 400,
+"compRange": "$400–500 sealed ($110–170 used)",
+"note": "Sealed ZV427MG9s sell for $400–500, but at $450 you'd lose about $100 after fees and shipping. Worth it only at ~$250–275.",
+"desc": "Still sealed, never used.",
+"url": "https://www.facebook.com/marketplace/item/2477627636080207/",
+"img": "img/2477627636080207.jpg",
+"foundAt": "2026-11-15T10:20:00Z"
+},
+{
+"id": "ou-9c359385-abfe-3377-93dd-0ac4aa1c871f",
+"title": "Samsung DVD-R120 DVD recorder",
+"source": "OfferUp",
+"price": 15,
+"location": "Clinton Twp",
+"call": "skip",
+"median": 35,
+"compRange": "$30–40",
+"sold30": 1,
+"sold90": 5,
+"note": "DVD-only recorder (no VCR). Sells ~$35 and slowly, so about break-even at $15.",
+"desc": "Samsung DVD recorder, works fine.",
+"url": "https://offerup.com/item/detail/9c359385-abfe-3377-93dd-0ac4aa1c871f",
+"img": "img/ou-9c359385-abfe-3377-93dd-0ac4aa1c871f.jpg",
+"foundAt": "2026-11-15T10:20:00Z"
+},
+{
+"id": "ou-304220ed-7a99-3bd1-8373-d7308851dcc0",
+"title": "VHS-to-DVD kit: Magnavox ZC320 DVD recorder + RCA VCR + Roku 2",
+"source": "OfferUp",
+"price": 60,
+"location": "Willis (~40 mi)",
+"call": "skip",
+"median": 87,
+"compRange": "ZC320 ~$45 + VR519 ~$42 sold separately",
+"note": "Sold separately you'd net ~$35 after fees and shipping, so it loses money at $60.",
+"desc": "Magnavox ZC320MW8B DVD recorder, RCA VR519 4-head VCR, Roku 2, cables. All tested.",
+"url": "https://offerup.com/item/detail/304220ed-7a99-3bd1-8373-d7308851dcc0",
+"img": "img/ou-304220ed-7a99-3bd1-8373-d7308851dcc0.jpg",
+"foundAt": "2026-11-15T10:20:00Z"
+},
+{
+"id": "ou-ferndale-vcrs",
+"title": "6 basic VCRs, $8–18 each (one seller)",
+"source": "OfferUp",
+"price": 12,
+"location": "Ferndale",
+"call": "info",
+"median": 40,
+"compRange": "~$35–45 basic VCR",
+"note": "Six VCRs at $8–18 with no brands listed. Only worth it for a Sony, Panasonic Hi-Fi, JVC or Mitsubishi S-VHS.",
+"url": "https://offerup.com/item/detail/f719ee1c-1678-3d5f-8227-9e86575e204a",
+"foundAt": "2026-11-15T10:20:00Z"
 }
 ]
 }
