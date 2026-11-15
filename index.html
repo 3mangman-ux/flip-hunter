@@ -168,6 +168,9 @@ a.btn{text-decoration:none;text-align:center}
   .card .msrc{display:inline}
 }
 .msrc{display:none}
+#reqBox{display:none}
+#reqBox .btn{display:inline-block;margin-top:8px;text-decoration:none}
+#reqBox small{display:block;color:var(--muted);margin-top:6px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;z-index:40;display:none}
 .banner{background:var(--accent-soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:12px;display:none}
 
@@ -194,8 +197,14 @@ a.btn{text-decoration:none;text-align:center}
   </header>
 
   <section class="hunt">
-    <h1>Local resale finds near Detroit</h1>
-    <p class="how" style="margin-top:0">VCRs and DVD recorders listed on Facebook Marketplace and Craigslist within 25 miles of 48224, each checked against what it actually sells for on eBay (used, sold), after 13.6% fees and $20 shipping. <span id="pubUpd"></span></p>
+    <h1>What are you hunting?</h1>
+    <form id="pubForm" autocomplete="off">
+      <input type="search" id="pq" placeholder="VCR, DVD recorder, Pyrex, PS2…" aria-label="Item to search for">
+      <button class="btn" type="submit">Search</button>
+    </form>
+    <div class="banner" id="reqBox"></div>
+    <div class="queue" id="pubQueue"></div>
+    <p class="how">VCRs and DVD recorders listed on Facebook Marketplace and Craigslist within 25 miles of 48224, each checked against what it actually sells for on eBay (used, sold), after 13.6% fees and $20 shipping. <span id="pubUpd"></span></p>
     <div class="queue" id="queue" hidden></div><form id="huntForm" hidden></form><div class="banner" id="banner"></div>
   </section>
 
@@ -440,6 +449,39 @@ a.btn{text-decoration:none;text-align:center}
   $("#txt").addEventListener("input", e => { fTxt = e.target.value; renderGrid(); });
   $("#srcSel").onchange = e => { fSrc = e.target.value; renderGrid(); };
   $("#refBtn").onclick = () => location.reload();
+  const REPO = "3mangman-ux/flip-hunter";
+  let pubSearches = [];
+  function huntLink(q){
+    const body = "Hunt for: " + q + "\nNear: 48224 (25 mi)\nSites: Facebook, Craigslist, OfferUp\n\n(Sent from the Flip Hunter page. Claude picks this up on its next hourly run.)";
+    return "https://github.com/" + REPO + "/issues/new?labels=hunt&title=" + encodeURIComponent("Hunt: " + q) + "&body=" + encodeURIComponent(body);
+  }
+  $("#pubForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const q = $("#pq").value.trim(); const box = $("#reqBox");
+    if (!q){ $("#pq").focus(); return; }
+    fTxt = q; $("#txt").value = q; fCall = "all"; renderSeg(); renderGrid();
+    const n = visible().length;
+    const known = pubSearches.find(s => s.q.toLowerCase() === q.toLowerCase());
+    box.innerHTML = `<b>${n ? n + " find" + (n>1?"s":"") + " below match “" + esc(q) + "”." : "No finds for “" + esc(q) + "” yet."}</b>
+      ${known && known.status !== "done" ? `<div>A hunt for “${esc(q)}” is already queued.</div>` :
+      `<div>Want fresh listings? Send it to the hunter: Claude searches Facebook Marketplace, Craigslist and OfferUp near 48224, checks eBay sold prices, and adds the finds here, usually within an hour.</div>
+      <a class="btn" href="${huntLink(q)}">Send hunt request</a>
+      <small>Opens GitHub with the request filled in. Tap “Submit new issue” (needs a free GitHub account).</small>`}`;
+    box.style.display = "block";
+    document.getElementById("grid").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"});
+  });
+  function renderPubQueue(){
+    $("#pubQueue").innerHTML = pubSearches.map(s => `<span class="q ${esc(s.status)}"><span class="dot"></span><b>${esc(s.q)}</b> <span>${s.status==="done" ? (s.found||0)+" found" : s.status==="running" ? "searching…" : "requested"}</span></span>`).join("");
+  }
+  async function loadRequests(){
+    try {
+      const r = await fetch("https://api.github.com/repos/" + REPO + "/issues?labels=hunt&state=open&per_page=20");
+      if (!r.ok) return;
+      const open = await r.json();
+      open.forEach(i => { const q = (i.title||"").replace(/^hunt:\s*/i,"").trim(); if (q && !pubSearches.some(s => s.q.toLowerCase() === q.toLowerCase())) pubSearches.unshift({q, status:"queued"}); });
+      renderPubQueue();
+    } catch(e){}
+  }
   async function refresh(){
     if (!db) return toast("Open this page signed in to Claude to load finds.");
     const b = $("#refBtn"); b.classList.add("spin");
@@ -491,6 +533,7 @@ a.btn{text-decoration:none;text-align:center}
     try {
       const d = await (await fetch("data.json", {cache:"no-store"})).json();
       listings = d.listings || []; settings = {...settings, ...(d.settings||{})};
+      pubSearches = d.searches || []; renderPubQueue(); loadRequests();
       const u = new Date(d.updated); lastSync = u;
       $("#pubUpd").textContent = "Last updated " + u.toLocaleString([], {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) + ".";
       $("#upd").textContent = "Updated " + u.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});

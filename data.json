@@ -563,5 +563,12 @@
 "url": "https://offerup.com/item/detail/f719ee1c-1678-3d5f-8227-9e86575e204a",
 "foundAt": "2026-11-15T10:20:00Z"
 }
+],
+"searches": [
+{
+"q": "vcr",
+"status": "done",
+"found": 38
+}
 ]
 }
